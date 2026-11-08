@@ -5,6 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Store Self Checkout</title>
+
 <style>
 *{box-sizing:border-box;font-family:Arial,sans-serif}
 body{margin:0;background:#e9edf3;color:#172b4d}
@@ -16,6 +17,7 @@ header h2{margin:0}
 .pin-display{background:#edf2f7;padding:17px;font-size:27px;letter-spacing:12px;border-radius:8px;margin:20px 0}
 .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 button{border:0;border-radius:8px;padding:15px;font-size:16px;font-weight:bold;cursor:pointer}
+button:active{transform:scale(.97)}
 .key{background:#e5edf7;color:#064b91;font-size:23px}
 .blue{background:#0755a0;color:white}
 .red{background:#d93636;color:white}
@@ -32,38 +34,63 @@ td,th{padding:12px 5px;border-bottom:1px solid #e1e6ed;text-align:left}
 .total-line{display:flex;justify-content:space-between;padding:8px 0}
 .grand-total{font-size:25px;font-weight:bold;color:#064b91}
 .status{color:#198754;font-weight:bold}
-footer{text-align:center;padding:20px;color:#758399}
+footer{padding:15px}
 
-/* CAMERA POPUP */
+/* CAMERA */
 .modal{
- position:fixed;inset:0;background:#0009;z-index:10;
- display:flex;justify-content:center;align-items:center;padding:15px;
+position:fixed;inset:0;background:#0009;z-index:10;
+display:flex;justify-content:center;align-items:center;padding:15px;
 }
 .modal-content{
- background:white;width:100%;max-width:520px;
- padding:22px;border-radius:14px;max-height:95vh;overflow:auto;
+background:white;width:100%;max-width:520px;
+padding:22px;border-radius:14px;max-height:95vh;overflow:auto;
 }
 .camera-area{
- background:#111;border-radius:10px;overflow:hidden;
- min-height:220px;display:flex;align-items:center;justify-content:center;
+background:#111;border-radius:10px;overflow:hidden;
+min-height:220px;display:flex;align-items:center;justify-content:center;
 }
 video,.preview{width:100%;max-height:300px;object-fit:contain}
 .preview{background:#111}
 .camera-buttons{display:flex;gap:10px;margin:12px 0}
 .camera-buttons button{flex:1}
 #cameraMessage{color:#b42318;font-size:13px}
+
+/* TRANSACTION RECEIPT */
+.receipt{
+background:white;padding:25px;border-radius:12px;
+width:100%;max-width:400px;text-align:center;
+}
+.receipt h2{color:#064b91}
+.receipt-total{font-size:28px;font-weight:bold;margin:20px 0;color:#064b91}
+.receipt-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #eee}
+.demo-label{
+position:fixed;bottom:5px;right:8px;
+font-size:10px;color:#aeb7c3;
+pointer-events:none;
+z-index:2;
+}
+
 @media(max-width:800px){
- .main-layout{grid-template-columns:1fr}
- .product-grid{grid-template-columns:repeat(2,1fr)}
+.main-layout{grid-template-columns:1fr}
+.product-grid{grid-template-columns:repeat(2,1fr)}
+.container{margin:10px auto;padding:10px}
+.login{margin:50px auto}
+header{padding:14px}
+header h2{font-size:18px}
 }
 </style>
 </head>
+
 <body>
+
+<!-- LOGIN -->
 
 <div id="loginScreen" class="login panel">
 <h2>Store Staff Login</h2>
 <p>Employee Access Terminal</p>
+
 <div id="pinDisplay" class="pin-display">----</div>
+
 <div class="keypad">
 <button class="key" onclick="pressKey('1')">1</button>
 <button class="key" onclick="pressKey('2')">2</button>
@@ -78,75 +105,124 @@ video,.preview{width:100%;max-height:300px;object-fit:contain}
 <button class="key" onclick="pressKey('0')">0</button>
 <button class="key green" onclick="login()">ENTER</button>
 </div>
+
 <p id="loginMessage"></p>
 </div>
 
+<!-- CHECKOUT -->
+
 <div id="checkoutScreen" class="hidden">
+
 <header>
 <h2>STORE SELF CHECKOUT</h2>
+
 <div style="text-align:right">
-Signed in as<br><strong>Nick</strong> | Employee
+Signed in as<br>
+<strong>Nick</strong> | Employee
 <button onclick="logout()" style="padding:7px;margin-left:8px">Log Out</button>
 </div>
 </header>
 
 <div class="container">
+
 <div class="main-layout">
 
 <div class="panel">
+
 <h3>Product Entry</h3>
+
 <div class="scan-box">
 <strong>Camera Product Scanner</strong>
 <p>Take a picture of an item and enter its details.</p>
+
 <button class="blue" style="width:100%" onclick="openCamera()">
 📷 SCAN / ADD ITEM
 </button>
+
 <p id="scanMessage" class="status">Terminal ready.</p>
 </div>
 
 <h3>Quick Add Products</h3>
 <div class="product-grid" id="productGrid"></div>
+
 <br>
 <button class="red" onclick="clearCart()">CLEAR TRANSACTION</button>
+
 </div>
 
 <div class="panel">
+
 <h3>Current Transaction</h3>
+
 <p>Transaction: <strong id="transactionNumber">000001</strong></p>
 <p>Status: <span class="status">ACTIVE</span></p>
+
 <table>
-<thead><tr><th>Item</th><th>Qty</th><th>Price</th><th></th></tr></thead>
+<thead>
+<tr>
+<th>Item</th>
+<th>Qty</th>
+<th>Price</th>
+<th></th>
+</tr>
+</thead>
+
 <tbody id="cartItems">
 <tr><td colspan="4">No items scanned.</td></tr>
 </tbody>
 </table>
+
 <br>
-<div class="total-line"><span>Subtotal</span><strong id="subtotal">$0.00</strong></div>
-<div class="total-line"><span>Estimated tax (6%)</span><strong id="tax">$0.00</strong></div>
+
+<div class="total-line">
+<span>Subtotal</span>
+<strong id="subtotal">$0.00</strong>
+</div>
+
+<div class="total-line">
+<span>Estimated tax (6%)</span>
+<strong id="tax">$0.00</strong>
+</div>
+
 <hr>
-<div class="total-line grand-total"><span>TOTAL</span><span id="total">$0.00</span></div>
+
+<div class="total-line grand-total">
+<span>TOTAL</span>
+<span id="total">$0.00</span>
+</div>
+
 <br>
-<button class="green" style="width:100%" onclick="finishTransaction()">COMPLETE SIMULATION</button>
+
+<button class="green" style="width:100%" onclick="finishTransaction()">
+COMPLETE TRANSACTION
+</button>
+
 <p id="checkoutMessage"></p>
+
 </div>
 </div>
 
 <br>
+
 <div class="panel">
 <h3>Staff Terminal Controls</h3>
+
 <p>Employee: <strong>Nick</strong></p>
 <p>Terminal: <strong>SELF-CHECKOUT 01</strong></p>
 <p>System: <span class="status">ONLINE</span></p>
+
 <button class="blue" onclick="showStats()">VIEW REGISTER STATUS</button>
 <p id="stats"></p>
 </div>
+
 </div>
-<footer>Fictional Store Terminal Simulation | Local Demo</footer>
 </div>
 
-<!-- CAMERA MODAL -->
+<!-- CAMERA POPUP -->
+
 <div id="cameraModal" class="modal hidden">
 <div class="modal-content">
+
 <h2>📷 Product Camera</h2>
 <p>Take a picture of the product you want to add.</p>
 
@@ -165,8 +241,10 @@ Signed in as<br><strong>Nick</strong> | Employee
 <button class="blue hidden" id="retakeButton" style="width:100%" onclick="retakePicture()">RETAKE PHOTO</button>
 
 <div id="itemDetails" class="hidden">
+
 <hr>
 <h3>Enter Product Details</h3>
+
 <label>Product name</label>
 <input id="newName" placeholder="Example: Orange Juice">
 
@@ -179,13 +257,53 @@ Signed in as<br><strong>Nick</strong> | Employee
 <button class="green" style="width:100%" onclick="addCustomProduct()">
 ADD TO CART
 </button>
+
 </div>
+
 <p id="cameraMessage"></p>
+
 </div>
 </div>
 
+<!-- TRANSACTION COMPLETE POPUP -->
+
+<div id="receiptModal" class="modal hidden">
+<div class="receipt">
+
+<h2>Transaction Completed</h2>
+<p>Transaction successfully recorded.</p>
+
+<hr>
+
+<div id="receiptItems"></div>
+
+<hr>
+
+<div class="receipt-row">
+<strong>Subtotal</strong>
+<strong id="receiptSubtotal">$0.00</strong>
+</div>
+
+<div class="receipt-row">
+<span>Tax</span>
+<span id="receiptTax">$0.00</span>
+</div>
+
+<div class="receipt-total" id="receiptTotal">$0.00</div>
+
+<button class="blue" style="width:100%" onclick="closeReceipt()">
+CONTINUE
+</button>
+
+</div>
+</div>
+
+<div class="demo-label">demo</div>
+
 <script>
+
 const CORRECT_PIN="0308";
+
 let pin="";
 let cart=[];
 let transaction=1;
@@ -209,11 +327,17 @@ if(pin.length>=4)return;
 pin+=n;
 updatePin();
 }
+
 function updatePin(){
 document.getElementById("pinDisplay").textContent=
 "•".repeat(pin.length)+"-".repeat(4-pin.length);
 }
-function clearPin(){pin="";updatePin();}
+
+function clearPin(){
+pin="";
+updatePin();
+}
+
 function login(){
 if(pin===CORRECT_PIN){
 document.getElementById("loginScreen").classList.add("hidden");
@@ -224,8 +348,10 @@ document.getElementById("loginMessage").textContent="Incorrect PIN.";
 clearPin();
 }
 }
+
 function logout(){
 closeCamera();
+closeReceipt();
 document.getElementById("checkoutScreen").classList.add("hidden");
 document.getElementById("loginScreen").classList.remove("hidden");
 clearPin();
@@ -234,11 +360,14 @@ clearPin();
 function renderProducts(){
 document.getElementById("productGrid").innerHTML=products.map((p,i)=>`
 <button class="product" onclick="addToCart(${i})">
-<strong>${p.name}</strong><small>$${p.price.toFixed(2)}</small>
-</button>`).join("");
+<strong>${p.name}</strong>
+<small>$${p.price.toFixed(2)}</small>
+</button>
+`).join("");
 }
 
 async function openCamera(){
+
 document.getElementById("cameraModal").classList.remove("hidden");
 document.getElementById("cameraMessage").textContent="";
 document.getElementById("itemDetails").classList.add("hidden");
@@ -246,6 +375,7 @@ document.getElementById("preview").classList.add("hidden");
 document.getElementById("camera").classList.remove("hidden");
 document.getElementById("captureButton").classList.remove("hidden");
 document.getElementById("retakeButton").classList.add("hidden");
+
 photoTaken=false;
 
 try{
@@ -253,61 +383,81 @@ cameraStream=await navigator.mediaDevices.getUserMedia({
 video:{facingMode:"environment"},
 audio:false
 });
+
 document.getElementById("camera").srcObject=cameraStream;
+
 }catch(error){
+
 document.getElementById("cameraMessage").textContent=
 "Camera unavailable. Allow camera permission and use localhost or HTTPS.";
+
 }
 }
 
 function takePicture(){
+
 const video=document.getElementById("camera");
+
 if(!cameraStream||!video.videoWidth){
-document.getElementById("cameraMessage").textContent=
-"Camera is not ready yet.";
+document.getElementById("cameraMessage").textContent="Camera is not ready yet.";
 return;
 }
+
 const canvas=document.getElementById("canvas");
+
 canvas.width=video.videoWidth;
 canvas.height=video.videoHeight;
+
 canvas.getContext("2d").drawImage(video,0,0);
 
 document.getElementById("preview").src=canvas.toDataURL("image/jpeg");
 document.getElementById("preview").classList.remove("hidden");
+
 video.classList.add("hidden");
 
 document.getElementById("captureButton").classList.add("hidden");
 document.getElementById("retakeButton").classList.remove("hidden");
 document.getElementById("itemDetails").classList.remove("hidden");
+
 document.getElementById("newName").focus();
 
 photoTaken=true;
+
 stopCamera();
 }
 
 async function retakePicture(){
+
 document.getElementById("itemDetails").classList.add("hidden");
 document.getElementById("preview").classList.add("hidden");
 document.getElementById("camera").classList.remove("hidden");
 document.getElementById("captureButton").classList.remove("hidden");
 document.getElementById("retakeButton").classList.add("hidden");
+
 photoTaken=false;
+
 await openCamera();
 }
 
 function stopCamera(){
+
 if(cameraStream){
 cameraStream.getTracks().forEach(track=>track.stop());
 cameraStream=null;
 }
+
 }
 
 function closeCamera(){
+
 stopCamera();
+
 document.getElementById("cameraModal").classList.add("hidden");
+
 }
 
 function addCustomProduct(){
+
 const name=document.getElementById("newName").value.trim();
 const price=parseFloat(document.getElementById("newPrice").value);
 const qty=parseInt(document.getElementById("newQty").value,10);
@@ -316,10 +466,13 @@ if(!photoTaken){
 alert("Take a picture first.");
 return;
 }
+
 if(!name||!Number.isFinite(price)||price<0||
 !Number.isInteger(qty)||qty<1){
+
 alert("Enter a valid product name, price and quantity.");
 return;
+
 }
 
 const custom={
@@ -330,78 +483,152 @@ qty:qty
 };
 
 cart.push(custom);
+
 renderCart();
+
 document.getElementById("scanMessage").textContent="Added: "+name;
+
 document.getElementById("newName").value="";
 document.getElementById("newPrice").value="";
 document.getElementById("newQty").value="1";
+
 closeCamera();
+
 }
 
 function addToCart(index){
+
 const product=products[index];
+
 const existing=cart.find(i=>i.barcode===product.barcode);
+
 if(existing)existing.qty++;
 else cart.push({...product,qty:1});
+
 renderCart();
+
 document.getElementById("scanMessage").textContent="Added: "+product.name;
+
 }
 
 function removeItem(barcode){
+
 cart=cart.filter(i=>i.barcode!==barcode);
+
 renderCart();
+
 }
 
 function renderCart(){
+
 const area=document.getElementById("cartItems");
+
 if(cart.length===0){
+
 area.innerHTML='<tr><td colspan="4">No items scanned.</td></tr>';
+
 }else{
+
 area.innerHTML=cart.map(item=>`
 <tr>
 <td>${escapeHTML(item.name)}</td>
 <td>${item.qty}</td>
 <td>$${(item.price*item.qty).toFixed(2)}</td>
-<td><button class="red" style="padding:7px" onclick="removeItem('${item.barcode}')">X</button></td>
-</tr>`).join("");
+<td>
+<button class="red" style="padding:7px" onclick="removeItem('${item.barcode}')">X</button>
+</td>
+</tr>
+`).join("");
+
 }
+
 const subtotal=cart.reduce((s,i)=>s+i.price*i.qty,0);
 const tax=subtotal*.06;
+
 document.getElementById("subtotal").textContent="$"+subtotal.toFixed(2);
 document.getElementById("tax").textContent="$"+tax.toFixed(2);
 document.getElementById("total").textContent="$"+(subtotal+tax).toFixed(2);
+
 }
 
 function escapeHTML(s){
+
 return s.replace(/[&<>"']/g,c=>({
-"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+"&":"&amp;",
+"<":"&lt;",
+">":"&gt;",
+'"':"&quot;",
+"'":"&#39;"
 }[c]));
+
 }
 
 function clearCart(){
+
 if(confirm("Clear the current transaction?")){
+
 cart=[];
 renderCart();
+
 }
+
 }
 
 function finishTransaction(){
-if(!cart.length){alert("Add some products first.");return;}
-alert("SIMULATION COMPLETE\nEmployee: Nick\nTotal: "+document.getElementById("total").textContent+"\nNo actual payment processed.");
+
+if(!cart.length){
+alert("Add some products first.");
+return;
+}
+
+const subtotal=cart.reduce((s,i)=>s+i.price*i.qty,0);
+const tax=subtotal*.06;
+const total=subtotal+tax;
+
+document.getElementById("receiptItems").innerHTML=cart.map(item=>`
+<div class="receipt-row">
+<span>${escapeHTML(item.name)} x${item.qty}</span>
+<span>$${(item.price*item.qty).toFixed(2)}</span>
+</div>
+`).join("");
+
+document.getElementById("receiptSubtotal").textContent="$"+subtotal.toFixed(2);
+document.getElementById("receiptTax").textContent="$"+tax.toFixed(2);
+document.getElementById("receiptTotal").textContent="$"+total.toFixed(2);
+
+document.getElementById("receiptModal").classList.remove("hidden");
+
+}
+
+function closeReceipt(){
+
+document.getElementById("receiptModal").classList.add("hidden");
+
 cart=[];
 transaction++;
-document.getElementById("transactionNumber").textContent=String(transaction).padStart(6,"0");
+
+document.getElementById("transactionNumber").textContent=
+String(transaction).padStart(6,"0");
+
+document.getElementById("checkoutMessage").textContent="Transaction completed.";
+
+document.getElementById("scanMessage").textContent="Terminal ready.";
+
 renderCart();
-document.getElementById("checkoutMessage").textContent="Demo transaction completed.";
+
 }
 
 function showStats(){
+
 document.getElementById("stats").textContent=
-"Terminal ONLINE | Employee Nick | "+cart.length+" different products in cart.";
+"Terminal ONLINE | Employee Nick | "+
+cart.length+" different products in cart.";
+
 }
 
 updatePin();
 renderCart();
+
 </script>
 </body>
 </html>
