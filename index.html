@@ -1,0 +1,561 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Store Self Checkout</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    margin: 0;
+    background: #e9edf3;
+    color: #172b4d;
+}
+
+header {
+    background: #064b91;
+    color: white;
+    padding: 16px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h2 {
+    margin: 0;
+    font-size: 23px;
+}
+
+.employee {
+    text-align: right;
+    font-size: 14px;
+}
+
+.container {
+    max-width: 1250px;
+    margin: 25px auto;
+    padding: 15px;
+}
+
+.panel {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px #0001;
+}
+
+.login {
+    max-width: 400px;
+    margin: 100px auto;
+    text-align: center;
+}
+
+.pin-display {
+    background: #edf2f7;
+    padding: 17px;
+    font-size: 27px;
+    letter-spacing: 12px;
+    border-radius: 8px;
+    margin: 20px 0;
+    min-height: 65px;
+}
+
+.keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+button {
+    border: none;
+    border-radius: 8px;
+    padding: 17px;
+    font-size: 17px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: .15s;
+}
+
+button:active {
+    transform: scale(.96);
+}
+
+.key {
+    background: #e5edf7;
+    color: #064b91;
+    font-size: 23px;
+}
+
+.key:hover {
+    background: #cbdcf0;
+}
+
+.blue {
+    background: #0755a0;
+    color: white;
+}
+
+.blue:hover {
+    background: #063e78;
+}
+
+.red {
+    background: #d93636;
+    color: white;
+}
+
+.green {
+    background: #198754;
+    color: white;
+}
+
+.main-layout {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 20px;
+}
+
+h3 {
+    margin-top: 0;
+}
+
+.scan-box {
+    background: #edf3fa;
+    padding: 18px;
+    border-radius: 9px;
+    margin-bottom: 15px;
+}
+
+input {
+    width: 100%;
+    padding: 15px;
+    font-size: 17px;
+    border: 1px solid #bdc9d8;
+    border-radius: 7px;
+    margin: 7px 0;
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.product {
+    background: #f0f5fb;
+    border: 2px solid #d8e4f1;
+    color: #174b7f;
+    padding: 15px 8px;
+    min-height: 100px;
+}
+
+.product:hover {
+    background: #dceafa;
+}
+
+.product small {
+    display: block;
+    margin-top: 7px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+td, th {
+    padding: 12px 5px;
+    border-bottom: 1px solid #e1e6ed;
+    text-align: left;
+}
+
+.remove {
+    padding: 7px 10px;
+    font-size: 12px;
+}
+
+.total-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+}
+
+.grand-total {
+    font-size: 25px;
+    font-weight: bold;
+    color: #064b91;
+}
+
+.hidden {
+    display: none;
+}
+
+.status {
+    color: #198754;
+    font-weight: bold;
+}
+
+footer {
+    text-align: center;
+    padding: 20px;
+    color: #758399;
+}
+
+@media(max-width: 800px) {
+    .main-layout {
+        grid-template-columns: 1fr;
+    }
+    .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+
+<div id="loginScreen" class="login panel">
+    <h2>Store Staff Login</h2>
+    <p>Employee Access Terminal</p>
+
+    <div id="pinDisplay" class="pin-display">----</div>
+
+    <div class="keypad">
+        <button class="key" onclick="pressKey('1')">1</button>
+        <button class="key" onclick="pressKey('2')">2</button>
+        <button class="key" onclick="pressKey('3')">3</button>
+        <button class="key" onclick="pressKey('4')">4</button>
+        <button class="key" onclick="pressKey('5')">5</button>
+        <button class="key" onclick="pressKey('6')">6</button>
+        <button class="key" onclick="pressKey('7')">7</button>
+        <button class="key" onclick="pressKey('8')">8</button>
+        <button class="key" onclick="pressKey('9')">9</button>
+        <button class="key red" onclick="clearPin()">CLR</button>
+        <button class="key" onclick="pressKey('0')">0</button>
+        <button class="key green" onclick="login()">ENTER</button>
+    </div>
+
+    <p id="loginMessage"></p>
+</div>
+
+<!-- CHECKOUT -->
+
+<div id="checkoutScreen" class="hidden">
+
+<header>
+    <h2>STORE SELF CHECKOUT</h2>
+    <div class="employee">
+        Signed in as<br>
+        <strong>Nick</strong> | Employee
+        <button onclick="logout()" style="padding:7px;margin-left:10px;background:white;color:#064b91">Log Out</button>
+    </div>
+</header>
+
+<div class="container">
+
+    <div class="main-layout">
+
+        <div class="panel">
+
+            <h3>Product Entry</h3>
+
+            <div class="scan-box">
+                <strong>Barcode / Product Lookup</strong>
+                <input id="barcodeInput" placeholder="Enter product barcode or name"
+                onkeydown="if(event.key==='Enter') scanProduct()">
+
+                <button class="blue" onclick="scanProduct()">SCAN / ADD ITEM</button>
+
+                <p id="scanMessage" class="status">Terminal ready.</p>
+            </div>
+
+            <h3>Quick Add Products</h3>
+
+            <div class="product-grid" id="productGrid"></div>
+
+            <br>
+
+            <button class="red" onclick="clearCart()">CLEAR TRANSACTION</button>
+
+        </div>
+
+        <div class="panel">
+
+            <h3>Current Transaction</h3>
+
+            <p>Transaction: <strong id="transactionNumber">000001</strong></p>
+            <p>Status: <span class="status">ACTIVE</span></p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="cartItems">
+                    <tr><td colspan="4">No items scanned.</td></tr>
+                </tbody>
+            </table>
+
+            <br>
+
+            <div class="total-line">
+                <span>Subtotal</span>
+                <strong id="subtotal">$0.00</strong>
+            </div>
+
+            <div class="total-line">
+                <span>Estimated tax (6%)</span>
+                <strong id="tax">$0.00</strong>
+            </div>
+
+            <hr>
+
+            <div class="total-line grand-total">
+                <span>TOTAL</span>
+                <span id="total">$0.00</span>
+            </div>
+
+            <br>
+
+            <button class="green" style="width:100%" onclick="finishTransaction()">
+                COMPLETE SIMULATION
+            </button>
+
+            <p id="checkoutMessage"></p>
+
+        </div>
+
+    </div>
+
+    <br>
+
+    <!-- STAFF DASHBOARD -->
+
+    <div class="panel">
+        <h3>Staff Terminal Controls</h3>
+
+        <p>Employee: <strong>Nick</strong></p>
+        <p>Terminal: <strong>SELF-CHECKOUT 01</strong></p>
+        <p>System: <span class="status">ONLINE</span></p>
+
+        <button class="blue" onclick="showStats()">VIEW REGISTER STATUS</button>
+
+        <p id="stats"></p>
+    </div>
+
+</div>
+
+<footer>
+    Fictional Store Terminal Simulation | Local Demo
+</footer>
+
+</div>
+
+<script>
+
+const CORRECT_PIN = "0308";
+
+let pin = "";
+let cart = [];
+let transaction = 1;
+
+const products = [
+    {name:"Milk",price:3.49,barcode:"1001"},
+    {name:"Bread",price:2.79,barcode:"1002"},
+    {name:"Eggs",price:4.29,barcode:"1003"},
+    {name:"Bananas",price:1.59,barcode:"1004"},
+    {name:"Apple Juice",price:3.99,barcode:"1005"},
+    {name:"Chips",price:2.49,barcode:"1006"},
+    {name:"Water",price:1.19,barcode:"1007"},
+    {name:"Cereal",price:4.79,barcode:"1008"},
+    {name:"Chocolate",price:1.99,barcode:"1009"}
+];
+
+function pressKey(number) {
+    if(pin.length >= 4) return;
+
+    pin += number;
+    updatePin();
+}
+
+function updatePin() {
+    document.getElementById("pinDisplay").textContent =
+        "•".repeat(pin.length) + "-".repeat(4-pin.length);
+}
+
+function clearPin() {
+    pin = "";
+    updatePin();
+}
+
+function login() {
+    if(pin === CORRECT_PIN) {
+        document.getElementById("loginScreen").classList.add("hidden");
+        document.getElementById("checkoutScreen").classList.remove("hidden");
+        renderProducts();
+    } else {
+        document.getElementById("loginMessage").textContent =
+            "Incorrect PIN. Try again.";
+        clearPin();
+    }
+}
+
+function logout() {
+    document.getElementById("checkoutScreen").classList.add("hidden");
+    document.getElementById("loginScreen").classList.remove("hidden");
+    clearPin();
+}
+
+function renderProducts() {
+    const grid = document.getElementById("productGrid");
+
+    grid.innerHTML = products.map((p,index) => `
+        <button class="product" onclick="addProduct(${index})">
+            <strong>${p.name}</strong>
+            <small>$${p.price.toFixed(2)}</small>
+        </button>
+    `).join("");
+}
+
+function scanProduct() {
+    const value = document.getElementById("barcodeInput")
+        .value.trim().toLowerCase();
+
+    if(!value) return;
+
+    const product = products.find(p =>
+        p.barcode === value || p.name.toLowerCase() === value
+    );
+
+    if(product) {
+        addToCart(product);
+        document.getElementById("scanMessage").textContent =
+            "Item added: " + product.name;
+    } else {
+        document.getElementById("scanMessage").textContent =
+            "Product not found in demo catalog.";
+    }
+
+    document.getElementById("barcodeInput").value = "";
+}
+
+function addProduct(index) {
+    addToCart(products[index]);
+
+    document.getElementById("scanMessage").textContent =
+        "Item added: " + products[index].name;
+}
+
+function addToCart(product) {
+    let existing = cart.find(item => item.barcode === product.barcode);
+
+    if(existing) {
+        existing.qty++;
+    } else {
+        cart.push({...product,qty:1});
+    }
+
+    renderCart();
+}
+
+function removeItem(barcode) {
+    cart = cart.filter(item => item.barcode !== barcode);
+    renderCart();
+}
+
+function renderCart() {
+    const area = document.getElementById("cartItems");
+
+    if(cart.length === 0) {
+        area.innerHTML = '<tr><td colspan="4">No items scanned.</td></tr>';
+    } else {
+        area.innerHTML = cart.map(item => `
+            <tr>
+                <td>${item.name}</td>
+                <td>${item.qty}</td>
+                <td>$${(item.price * item.qty).toFixed(2)}</td>
+                <td>
+                    <button class="red remove"
+                    onclick="removeItem('${item.barcode}')">X</button>
+                </td>
+            </tr>
+        `).join("");
+    }
+
+    const subtotal = cart.reduce((sum,item) =>
+        sum + item.price * item.qty,0);
+
+    const tax = subtotal * 0.06;
+
+    document.getElementById("subtotal").textContent =
+        "$" + subtotal.toFixed(2);
+
+    document.getElementById("tax").textContent =
+        "$" + tax.toFixed(2);
+
+    document.getElementById("total").textContent =
+        "$" + (subtotal + tax).toFixed(2);
+}
+
+function clearCart() {
+    if(confirm("Clear the current transaction?")) {
+        cart = [];
+        renderCart();
+        document.getElementById("checkoutMessage").textContent =
+            "Transaction cleared.";
+    }
+}
+
+function finishTransaction() {
+    if(cart.length === 0) {
+        alert("Add some products first.");
+        return;
+    }
+
+    const total = cart.reduce((sum,item) =>
+        sum + item.price * item.qty,0) * 1.06;
+
+    alert(
+        "SIMULATION COMPLETE\n\n" +
+        "Employee: Nick\n" +
+        "Total: $" + total.toFixed(2) +
+        "\n\nNo actual payment was processed."
+    );
+
+    cart = [];
+    transaction++;
+
+    document.getElementById("transactionNumber").textContent =
+        String(transaction).padStart(6,"0");
+
+    renderCart();
+
+    document.getElementById("checkoutMessage").textContent =
+        "Demo transaction completed.";
+}
+
+function showStats() {
+    document.getElementById("stats").textContent =
+        "Terminal ONLINE | Employee Nick | " +
+        cart.length + " different products in current cart.";
+}
+
+updatePin();
+renderCart();
+
+</script>
+
+</body>
+</html>
